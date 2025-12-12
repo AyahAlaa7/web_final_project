@@ -1,21 +1,9 @@
-﻿@model ErrorViewModel
-@{
-    ViewData["Title"] = "Error";
-}
-
-<div class="alert alert-danger mt-4">
-    <h1 class="text-danger">An Error Occurred</h1>
-    <p>Something went wrong while processing your request.</p>
-
-    @if (Model?.ShowRequestId == true)
+﻿namespace OnlineBookStore.Models
+{
+    public class ErrorViewModel
     {
-        <p><strong>Request ID:</strong> <code>@Model.RequestId</code></p>
+        public string RequestId { get; set; }
+        public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
     }
-
-    <hr />
-
-    <p class="text-muted">
-        If you are developing the application, enable <strong>Development</strong> mode to see the full exception details.
-    </p>
-</div>
+}
 

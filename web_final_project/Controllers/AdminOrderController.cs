@@ -1,58 +1,107 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OnlineBookStore.Data;
+using OnlineBookStore.Models;
 
-using OnlineBookStors.Attributes;
-using OnlineBookStors.Data;
-
-[AdminOnly]
-public class AdminOrderController : Controller
+namespace OnlineBookStore.Controllers
 {
-    private readonly AppDbContext _context;
-
-    public AdminOrderController(AppDbContext context) => _context = context;
-
-    public IActionResult Index()
+    [Authorize(Policy = "AdminOnly")]
+    public class AdminOrderController : Controller
     {
-        var orders = _context.Orders
-            .Include(o => o.User)
-            .Include(o => o.Items)
-            .ThenInclude(i => i.Book)
-            .ToList();
+        private readonly AppDbContext _context;
 
-        return View(orders);
-    }
-
-    public IActionResult Confirm(int id)
-    {
-        var order = _context.Orders.Find(id);
-        if (order != null)
+        public AdminOrderController(AppDbContext context)
         {
-            order.Status = "Confirmed";
-            _context.SaveChanges();
+            _context = context;
         }
-        return RedirectToAction("Index");
-    }
 
-    public IActionResult Ship(int id)
-    {
-        var order = _context.Orders.Find(id);
-        if (order != null)
+        // GET: AdminOrder
+        public async Task<IActionResult> Index(string? status)
         {
-            order.Status = "Shipped";
-            _context.SaveChanges();
-        }
-        return RedirectToAction("Index");
-    }
+            var query = _context.Orders
+                .Include(o => o.AppUser)
+                .Include(o => o.Items)
+                .ThenInclude(i => i.Book)
+                .AsQueryable();
 
-    public IActionResult Cancel(int id)
-    {
-        var order = _context.Orders.Find(id);
-        if (order != null)
-        {
-            order.Status = "Cancelled";
-            _context.SaveChanges();
+            if (!string.IsNullOrWhiteSpace(status))
+                query = query.Where(o => o.Status == status);
+
+            ViewBag.Status = status;
+
+            var orders = await query
+                .OrderByDescending(o => o.OrderDate)
+                .ToListAsync();
+
+            return View(orders);
         }
-        return RedirectToAction("Index");
+
+        // GET: AdminOrder/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            var order = await _context.Orders
+                .Include(o => o.AppUser)
+                .Include(o => o.Items)
+                .ThenInclude(i => i.Book)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (order == null)
+                return NotFound();
+
+            return View(order);
+        }
+
+        // POST: AdminOrder/Confirm
+        [HttpPost]
+        public async Task<IActionResult> Confirm(int id)
+        {
+            var order = await _context.Orders.FindAsync(id);
+            if (order == null)
+                return NotFound();
+
+            if (order.Status == "Pending")
+            {
+                order.Status = "Confirmed";
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // POST: AdminOrder/Ship
+        [HttpPost]
+        public async Task<IActionResult> Ship(int id)
+        {
+            var order = await _context.Orders.FindAsync(id);
+            if (order == null)
+                return NotFound();
+
+            if (order.Status == "Confirmed")
+            {
+                order.Status = "Shipped";
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // POST: AdminOrder/Cancel
+        [HttpPost]
+        public async Task<IActionResult> Cancel(int id)
+        {
+            var order = await _context.Orders.FindAsync(id);
+            if (order == null)
+                return NotFound();
+
+            if (order.Status == "Pending" || order.Status == "Confirmed")
+            {
+                order.Status = "Cancelled";
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
     }
 }
 

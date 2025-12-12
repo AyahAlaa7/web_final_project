@@ -1,47 +1,58 @@
-﻿@model IEnumerable<OnlineBookStors.Models.CartItem>
+﻿@model IEnumerable<OnlineBookStore.Models.CartItem>
 
 @{
-    ViewData["Title"] = "Cart";
+    ViewData["Title"] = "My Cart";
 }
 
-<div class="container mt-4">
-    <h2>Your Cart</h2>
+<h2 class="mt-4 mb-3">My Cart</h2>
 
-    @if (!Model.Any())
-    {
-        <p>Your cart is empty.</p>
-        <a href="/Books" class="btn btn-primary">Browse Books</a>
-    }
-    else
-    {
-        <table class="table table-striped">
-            <thead>
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Your cart is empty.</div>
+    <a asp-controller="Book" asp-action="Index" class="btn btn-primary">Shop Books</a>
+}
+else
+{
+    <table class="table table-bordered align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Book</th>
+                <th>Price</th>
+                <th width="120">Quantity</th>
+                <th>Total</th>
+                <th width="120"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
                 <tr>
-                    <th>Book</th>
-                    <th>Qty</th>
-                    <th>Price</th>
-                    <th>Total</th>
-                    <th></th>
+                    <td>@item.Book.Title</td>
+                    <td>@item.Book.Price.ToString("C")</td>
+
+                    <td>
+                        <form asp-action="Update" method="post" class="d-flex">
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <input type="number" name="quantity" value="@item.Quantity" min="1" class="form-control" />
+                            <button class="btn btn-sm btn-success ms-2">Save</button>
+                        </form>
+                    </td>
+
+                    <td>@(item.Book.Price* item.Quantity).ToString("C")</td>
+
+                    <td>
+                        <form asp-action="Remove" method="post">
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <button class="btn btn-sm btn-danger w-100">Remove</button>
+                        </form>
+                    </td>
                 </tr>
-            </thead>
+            }
+        </tbody>
+    </table>
 
-            <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td>@item.Book.Title</td>
-                        <td>@item.Quantity</td>
-                        <td>@item.Book.Price $</td>
-                        <td>@(item.Book.Price* item.Quantity) $</td>
-                        <td>
-                            <a href="/Cart/Remove/@item.Id" class="btn btn-danger btn-sm">Remove</a>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-
-        <a href="/Cart/Checkout" class="btn btn-success">Proceed to Checkout</a>
-    }
-</div>
+    <form asp-controller="Order" asp-action="Checkout" method="post">
+        <button class="btn btn-primary btn-lg">Proceed to Checkout</button>
+    </form>
+}
 

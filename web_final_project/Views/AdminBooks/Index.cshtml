@@ -1,33 +1,34 @@
-﻿@model IEnumerable<OnlineBookStors.Models.Book>
+﻿@model IEnumerable<OnlineBookStore.Models.Book>
 
-<div class="container mt-4">
-    <h2>Books</h2>
+<h2 class="mt-4 mb-3">Manage Books</h2>
 
-    <a href="/AdminBook/Create" class="btn btn-success mb-3">Add New Book</a>
+<a asp-action="Create" class="btn btn-success mb-3">Add New Book</a>
 
-    <table class="table table-striped">
-        <thead>
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th width="180"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var b in Model)
+        {
             <tr>
-                <th>Title</th>
-                <th>Category</th>
-                <th>Price</th>
-                <th width="200px"></th>
+                <td>@b.Title</td>
+                <td>@b.Author</td>
+                <td>@b.Category?.Name</td>
+                <td>@b.Price.ToString("C")</td>
+                <td>@b.Stock</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@b.Id" class="btn btn-sm btn-primary">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@b.Id" class="btn btn-sm btn-danger">Delete</a>
+                </td>
             </tr>
-        </thead>
-
-        <tbody>
-            @foreach (var b in Model)
-            {
-                <tr>
-                    <td>@b.Title</td>
-                    <td>@b.Category.Name</td>
-                    <td>@b.Price $</td>
-                    <td>
-                        <a class="btn btn-primary btn-sm" href="/AdminBook/Edit/@b.Id">Edit</a>
-                        <a class="btn btn-danger btn-sm" href="/AdminBook/Delete/@b.Id">Delete</a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-</div>
+        }
+    </tbody>
+</table>

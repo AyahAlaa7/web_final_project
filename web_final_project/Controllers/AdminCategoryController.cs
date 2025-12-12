@@ -1,66 +1,93 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using OnlineBookStors.Data;
-using OnlineBookStors.Models;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using OnlineBookStore.Data;
+using OnlineBookStore.Models;
 
-namespace OnlineBookStors.Controllers.Admin
+namespace OnlineBookStore.Controllers
 {
-    [AdminOnly]
+    [Authorize(Policy = "AdminOnly")]
     public class AdminCategoryController : Controller
     {
-        private readonly AppDbContext _db;
+        private readonly AppDbContext _context;
 
-        public AdminCategoryController(AppDbContext db)
+        public AdminCategoryController(AppDbContext context)
         {
-            _db = db;
+            _context = context;
         }
 
-        public IActionResult Index()
+        // GET: AdminCategory
+        public async Task<IActionResult> Index()
         {
-            var categories = _db.Categories.ToList();
+            var categories = await _context.Categories.ToListAsync();
             return View(categories);
         }
 
-        public IActionResult Create() => View();
-
-        [HttpPost]
-        public IActionResult Create(Category model)
+        // GET: AdminCategory/Create
+        public IActionResult Create()
         {
-            if (!ModelState.IsValid) return View(model);
-
-            _db.Categories.Add(model);
-            _db.SaveChanges();
-
-            return RedirectToAction("Index");
+            return View();
         }
 
-        public IActionResult Edit(int id)
+        // POST: AdminCategory/Create
+        [HttpPost]
+        public async Task<IActionResult> Create(Category category)
         {
-            var category = _db.Categories.FirstOrDefault(c => c.Id == id);
-            if (category == null) return NotFound();
+            if (!ModelState.IsValid)
+                return View(category);
+
+            _context.Categories.Add(category);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
+        // GET: AdminCategory/Edit/5
+        public async Task<IActionResult> Edit(int id)
+        {
+            var category = await _context.Categories.FindAsync(id);
+            if (category == null)
+                return NotFound();
 
             return View(category);
         }
 
+        // POST: AdminCategory/Edit
         [HttpPost]
-        public IActionResult Edit(Category model)
+        public async Task<IActionResult> Edit(Category category)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+                return View(category);
 
-            _db.Categories.Update(model);
-            _db.SaveChanges();
-
-            return RedirectToAction("Index");
+            _context.Categories.Update(category);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
 
-        public IActionResult Delete(int id)
+        // GET: AdminCategory/Delete/5
+        public async Task<IActionResult> Delete(int id)
         {
-            var category = _db.Categories.FirstOrDefault(c => c.Id == id);
-            if (category == null) return NotFound();
+            var category = await _context.Categories
+                .Include(c => c.Books)
+                .FirstOrDefaultAsync(c => c.Id == id);
 
-            _db.Categories.Remove(category);
-            _db.SaveChanges();
+            if (category == null)
+                return NotFound();
 
-            return RedirectToAction("Index");
+            return View(category);
+        }
+
+        // POST: AdminCategory/Delete
+        [HttpPost, ActionName("Delete")]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var category = await _context.Categories.FindAsync(id);
+            if (category != null)
+            {
+                _context.Categories.Remove(category);
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }

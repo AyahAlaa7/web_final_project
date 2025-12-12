@@ -1,28 +1,38 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using OnlineBookStors.Attributes;
-using OnlineBookStors.Data;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using OnlineBookStore.Data;
 
-[AdminOnly]
-public class AdminUserController : Controller
+namespace OnlineBookStore.Controllers
 {
-    private readonly AppDbContext _context;
-
-    public AdminUserController(AppDbContext context) => _context = context;
-
-    public IActionResult Index()
+    [Authorize(Policy = "AdminOnly")]
+    public class AdminUserController : Controller
     {
-        return View(_context.Users.ToList());
-    }
+        private readonly AppDbContext _context;
 
-    public IActionResult MakeAdmin(int id)
-    {
-        var user = _context.Users.Find(id);
-        if (user != null)
+        public AdminUserController(AppDbContext context)
         {
-            user.Role = "Admin";
-            _context.SaveChanges();
+            _context = context;
         }
-        return RedirectToAction("Index");
+
+        public IActionResult Index()
+        {
+            // FIX: Use AppUsers instead of Users
+            return View(_context.AppUsers.ToList());
+        }
+
+        public IActionResult MakeAdmin(int id)
+        {
+            // FIX: Use AppUsers instead of Users
+            var user = _context.AppUsers.Find(id);
+
+            if (user != null)
+            {
+                user.Role = "Admin";
+                _context.SaveChanges();
+            }
+
+            return RedirectToAction("Index");
+        }
     }
 }
 

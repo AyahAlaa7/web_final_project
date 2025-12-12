@@ -1,14 +1,25 @@
 ﻿@{
     ViewData["Title"] = "Home";
+    var emailClaim = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")?.Value;
 }
 
-<div class="container mt-5">
-    <div class="text-center">
-        <h1>Welcome to OnlineBookStore</h1>
-        <p class="lead">Buy your favorite books easily.</p>
+<div class="mt-4">
+    @if (User.Identity?.IsAuthenticated ?? false)
+    {
+        <h2>Welcome, @emailClaim</h2>
+        <p class="text-muted">Browse and shop your favorite books.</p>
 
-        <a href="/Books" class="btn btn-primary btn-lg">Browse Books</a>
-    </div>
+        <a asp-controller="Book" asp-action="Index" class="btn btn-primary me-2">Shop Books</a>
+        <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-secondary">My Cart</a>
+    }
+    else
+    {
+        <h2>Welcome to BookStore</h2>
+        <p class="text-muted">Please log in or register to start shopping.</p>
+
+        <a asp-controller="Account" asp-action="Login" class="btn btn-primary me-2">Login</a>
+        <a asp-controller="Account" asp-action="Register" class="btn btn-outline-secondary">Register</a>
+    }
 </div>
 
 

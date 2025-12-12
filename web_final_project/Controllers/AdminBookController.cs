@@ -1,55 +1,89 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OnlineBookStore.Data;
+using OnlineBookStore.Models;
 
-using OnlineBookStors.Attributes;
-using OnlineBookStors.Data;
-using OnlineBookStors.Models;
-
-[AdminOnly]
-public class AdminBookController : Controller
+namespace OnlineBookStore.Controllers
 {
-    private readonly AppDbContext _context;
-    public AdminBookController(AppDbContext context) => _context = context;
-
-    public IActionResult Index()
+    [Authorize(Policy = "AdminOnly")]
+    public class AdminBookController : Controller
     {
-        var books = _context.Books.Include(b => b.Category).ToList();
-        return View(books);
-    }
+        private readonly AppDbContext _context;
 
-    public IActionResult Create()
-    {
-        ViewBag.Categories = _context.Categories.ToList();
-        return View();
-    }
+        public AdminBookController(AppDbContext context)
+        {
+            _context = context;
+        }
 
-    [HttpPost]
-    public IActionResult Create(Book model)
-    {
-        _context.Books.Add(model);
-        _context.SaveChanges();
-        return RedirectToAction("Index");
-    }
+        public async Task<IActionResult> Index()
+        {
+            var books = await _context.Books.Include(b => b.Category).ToListAsync();
+            return View(books);
+        }
 
-    public IActionResult Edit(int id)
-    {
-        ViewBag.Categories = _context.Categories.ToList();
-        return View(_context.Books.Find(id));
-    }
+        public async Task<IActionResult> Create()
+        {
+            ViewBag.Categories = await _context.Categories.ToListAsync();
+            return View();
+        }
 
-    [HttpPost]
-    public IActionResult Edit(Book b)
-    {
-        _context.Books.Update(b);
-        _context.SaveChanges();
-        return RedirectToAction("Index");
-    }
+        [HttpPost]
+        public async Task<IActionResult> Create(Book book)
+        {
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Categories = await _context.Categories.ToListAsync();
+                return View(book);
+            }
 
-    public IActionResult Delete(int id)
-    {
-        var b = _context.Books.Find(id);
-        if (b != null) _context.Books.Remove(b);
-        _context.SaveChanges();
-        return RedirectToAction("Index");
+            _context.Books.Add(book);
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
+
+        public async Task<IActionResult> Edit(int id)
+        {
+            var book = await _context.Books.FindAsync(id);
+            if (book == null) return NotFound();
+
+            ViewBag.Categories = await _context.Categories.ToListAsync();
+            return View(book);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Edit(Book book)
+        {
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Categories = await _context.Categories.ToListAsync();
+                return View(book);
+            }
+
+            _context.Books.Update(book);
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
+
+        public async Task<IActionResult> Delete(int id)
+        {
+            var book = await _context.Books.Include(b => b.Category).FirstOrDefaultAsync(b => b.Id == id);
+            if (book == null) return NotFound();
+
+            return View(book);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var book = await _context.Books.FindAsync(id);
+            if (book != null)
+            {
+                _context.Books.Remove(book);
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction("Index");
+        }
     }
 }

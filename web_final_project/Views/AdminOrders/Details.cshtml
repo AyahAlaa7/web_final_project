@@ -1,0 +1,36 @@
+﻿@model OnlineBookStore.Models.Order
+
+<h2 class="mt-4 mb-3">Order Details</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <p><strong>Order #:</strong> @Model.Id</p>
+        <p><strong>User:</strong> @Model.AppUser.Email</p>
+        <p><strong>Status:</strong> @Model.Status</p>
+        <p><strong>Date:</strong> @Model.OrderDate.ToShortDateString()</p>
+    </div>
+</div>
+
+<h4>Items</h4>
+
+<table class="table table-bordered">
+    <thead class="table-light">
+        <tr>
+            <th>Book</th>
+            <th>Qty</th>
+            <th>Price</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Items)
+        {
+            <tr>
+                <td>@item.Book.Title</td>
+                <td>@item.Quantity</td>
+                <td>@item.UnitPrice.ToString("C")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-action="Index" class="btn btn-secondary mt-3">Back</a>

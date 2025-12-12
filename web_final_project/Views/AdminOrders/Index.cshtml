@@ -1,28 +1,64 @@
-﻿@model IEnumerable<OnlineBookStors.Models.Order>
+﻿@model IEnumerable<OnlineBookStore.Models.Order>
 
-<div class="container mt-4">
-    <h2>Orders</h2>
+<h2 class="mt-4 mb-3">Manage Orders</h2>
 
-    <table class="table table-bordered">
-        <thead>
+<form method="get" class="mb-3">
+    <select name="status" class="form-select" style="max-width: 250px;">
+        <option value="">All</option>
+        <option value="Pending">Pending</option>
+        <option value="Confirmed">Confirmed</option>
+        <option value="Shipped">Shipped</option>
+        <option value="Cancelled">Cancelled</option>
+    </select>
+    <button class="btn btn-primary mt-2">Filter</button>
+</form>
+
+<table class="table table-bordered">
+    <thead class="table-dark">
+        <tr>
+            <th>Order #</th>
+            <th>User</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th width="250"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var o in Model)
+        {
             <tr>
-                <th>Order Id</th>
-                <th>User</th>
-                <th>Total</th>
-                <th>Date</th>
-            </tr>
-        </thead>
+                <td>@o.Id</td>
+                <td>@o.AppUser.Email</td>
+                <td>@o.Status</td>
+                <td>@o.OrderDate.ToShortDateString()</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@o.Id" class="btn btn-sm btn-info">Details</a>
 
-        <tbody>
-            @foreach (var o in Model)
-            {
-                <tr>
-                    <td>@o.Id</td>
-                    <td>@o.User.Username</td>
-                    <td>@o.TotalAmount $</td>
-                    <td>@o.OrderDate.ToShortDateString()</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-</div>
+                    @if (o.Status == "Pending")
+                    {
+                        <form asp-action="Confirm" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@o.Id" />
+                            <button class="btn btn-sm btn-success">Confirm</button>
+                        </form>
+                    }
+
+                    @if (o.Status == "Confirmed")
+                    {
+                        <form asp-action="Ship" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@o.Id" />
+                            <button class="btn btn-sm btn-warning">Ship</button>
+                        </form>
+                    }
+
+                    @if (o.Status == "Pending" || o.Status == "Confirmed")
+                    {
+                        <form asp-action="Cancel" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@o.Id" />
+                            <button class="btn btn-sm btn-danger">Cancel</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

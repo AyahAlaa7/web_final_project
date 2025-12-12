@@ -1,61 +1,87 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
-using OnlineBookStors.Data;
-using OnlineBookStors.Models;
+using OnlineBookStore.Data;
+using OnlineBookStore.Models;
+using System.Security.Claims;
 
 namespace OnlineBookStore.Controllers
 {
+    [Authorize]
     public class CartController : Controller
     {
         private readonly AppDbContext _context;
-        public CartController(AppDbContext context) => _context = context;
 
-        private int CurrentUserId =>
-            int.Parse(User.Claims.First(c => c.Type == "UserId").Value);
-
-        public IActionResult Index()
+        public CartController(AppDbContext context)
         {
-            var items = _context.CartItems
+            _context = context;
+        }
+
+        private int GetUserId()
+        {
+            return int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var userId = GetUserId();
+            var items = await _context.CartItems
                 .Include(c => c.Book)
-                .Where(c => c.Id == CurrentUserId)
-                .ToList();
+                .Where(c => c.AppUserId == userId)
+                .ToListAsync();
 
             return View(items);
         }
 
-        public IActionResult Add(int bookId)
+        [HttpPost]
+        public async Task<IActionResult> Add(int bookId, int quantity = 1)
         {
-            var existing = _context.CartItems
-                .FirstOrDefault(c => c.BookId == bookId && c.Id == CurrentUserId);
+            var userId = GetUserId();
+
+            var existing = await _context.CartItems
+                .FirstOrDefaultAsync(c => c.AppUserId == userId && c.BookId == bookId);
 
             if (existing != null)
-                existing.Quantity++;
+            {
+                existing.Quantity += quantity;
+            }
             else
+            {
                 _context.CartItems.Add(new CartItem
                 {
+                    AppUserId = userId,
                     BookId = bookId,
-                    Id = CurrentUserId,
-                    Quantity = 1
+                    Quantity = quantity
                 });
+            }
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index", "Cart");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Update(int id, int quantity)
+        {
+            var item = await _context.CartItems.FindAsync(id);
+            if (item == null) return NotFound();
+
+            if (quantity <= 0)
+                _context.CartItems.Remove(item);
+            else
+                item.Quantity = quantity;
+
+            await _context.SaveChangesAsync();
             return RedirectToAction("Index");
         }
 
-        public IActionResult Remove(int id)
+        [HttpPost]
+        public async Task<IActionResult> Remove(int id)
         {
-            var item = _context.CartItems.Find(id);
-            if (item != null) _context.CartItems.Remove(item);
-            _context.SaveChanges();
-            return RedirectToAction("Index");
-        }
+            var item = await _context.CartItems.FindAsync(id);
+            if (item == null) return NotFound();
 
-        public IActionResult Update(int id, int qty)
-        {
-            var item = _context.CartItems.Find(id);
-            if (item != null) item.Quantity = qty;
-            _context.SaveChanges();
+            _context.CartItems.Remove(item);
+            await _context.SaveChangesAsync();
             return RedirectToAction("Index");
         }
     }

@@ -1,0 +1,61 @@
+﻿@model IEnumerable<OnlineBookStore.Models.Order>
+
+@{
+    ViewData["Title"] = "My Orders";
+}
+
+<h2 class="mt-4 mb-3">My Orders</h2>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">You have no orders yet.</div>
+    <a asp-controller="Book" asp-action="Index" class="btn btn-primary">Shop Books</a>
+}
+else
+{
+    <div class="accordion" id="ordersAccordion">
+        @foreach (var order in Model)
+        {
+            <div class="accordion-item mb-2">
+                <h2 class="accordion-header" id="heading-@order.Id">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#order-@order.Id">
+                        Order #@order.Id — @order.Status — @order.OrderDate.ToShortDateString()
+                    </button>
+                </h2>
+
+                <div id="order-@order.Id" class="accordion-collapse collapse">
+                    <div class="accordion-body">
+
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Book</th>
+                                    <th>Qty</th>
+                                    <th>Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in order.Items)
+                                {
+                                    <tr>
+                                        <td>@item.Book.Title</td>
+                                        <td>@item.Quantity</td>
+                                        <td>@item.UnitPrice.ToString("C")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+
+                        @if (order.Status == "Pending")
+                        {
+                            <form asp-action="Cancel" method="post">
+                                <input type="hidden" name="id" value="@order.Id" />
+                                <button class="btn btn-danger">Cancel Order</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

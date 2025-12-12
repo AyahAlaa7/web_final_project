@@ -1,0 +1,72 @@
+﻿@{
+    ViewData["Title"] = "Statistics Dashboard";
+
+    var topBooks = ViewBag.TopBooks as IEnumerable<dynamic>;
+    var topCategories = ViewBag.TopCategories as IEnumerable<dynamic>;
+}
+
+<h2 class="mt-4 mb-4">📊 Sales Statistics</h2>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+                <h5>Total Revenue</h5>
+                <h3>@ViewBag.TotalRevenue.ToString("C")</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+                <h5>Total Books Sold</h5>
+                <h3>@ViewBag.TotalSales</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr />
+
+<h3 class="mt-4">📘 Top-Selling Books</h3>
+
+<table class="table table-bordered mt-3">
+    <thead class="table-dark">
+        <tr>
+            <th>Book</th>
+            <th>Quantity Sold</th>
+            <th>Revenue</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var b in topBooks)
+        {
+            <tr>
+                <td>@b.Title</td>
+                <td>@b.Quantity</td>
+                <td>@b.Revenue.ToString("C")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<h3 class="mt-5">🏷️ Most Popular Categories</h3>
+
+<table class="table table-bordered mt-3">
+    <thead class="table-dark">
+        <tr>
+            <th>Category</th>
+            <th>Books Sold</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var c in topCategories)
+        {
+            <tr>
+                <td>@c.Category</td>
+                <td>@c.Quantity</td>
+            </tr>
+        }
+    </tbody>
+</table>
